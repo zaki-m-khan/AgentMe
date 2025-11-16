@@ -11,6 +11,13 @@ interface ProfileProps {
 }
 
 export default function Profile({ profile, onNavigate, onUpdateProfile }: ProfileProps) {
+  const avatarSource = profile.avatar || profile.photoUrl;
+  const isImageAvatar =
+    !!avatarSource &&
+    (avatarSource.startsWith('http') ||
+      avatarSource.startsWith('blob:') ||
+      avatarSource.startsWith('data:'));
+
   const handleRegenerateAvatar = () => {
     const avatarStyles = ['😊', '🎓', '💼', '🚀', '💡', '🎯', '⭐', '🌟'];
     const randomAvatar = avatarStyles[Math.floor(Math.random() * avatarStyles.length)];
@@ -19,11 +26,19 @@ export default function Profile({ profile, onNavigate, onUpdateProfile }: Profil
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <div className="bg-gradient-to-br from-purple-500 to-blue-500 p-6 pb-12">
+      <div className="bg-gradient-to-br from-purple-500 to-blue-500 p-6 pb-8">
         <div className="flex flex-col items-center space-y-4">
           <div className="relative">
-            <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center text-5xl shadow-lg">
-              {profile.avatar}
+            <div className="w-28 h-28 bg-white rounded-full flex items-center justify-center text-5xl shadow-lg overflow-hidden border-2 border-white/40">
+              {isImageAvatar ? (
+                <img
+                  src={avatarSource}
+                  alt="Profile avatar"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span>{profile.avatar || '🙂'}</span>
+              )}
             </div>
             <button
               onClick={handleRegenerateAvatar}
@@ -42,7 +57,7 @@ export default function Profile({ profile, onNavigate, onUpdateProfile }: Profil
         </div>
       </div>
 
-      <div className="flex-1 -mt-6 p-6 pb-24 space-y-4">
+      <div className="flex-1 -mt-4 p-6 pb-16 space-y-4">
         <div className="bg-white rounded-2xl p-5 border border-gray-200 space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">

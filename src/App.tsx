@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import Welcome from './components/Welcome';
 import UploadPhoto from './components/UploadPhoto';
 import BasicInfo from './components/BasicInfo';
@@ -169,9 +169,14 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-teal-50">
-      <div className="max-w-md mx-auto min-h-screen bg-white shadow-2xl relative">
-        {renderScreen()}
+    <div className="min-h-screen bg-gradient-to-br from-[#e8f0ff] via-[#f3e6ff] to-[#dff8ff] py-4">
+      <div className="max-w-md mx-auto min-h-[calc(100vh-32px)] relative overflow-hidden rounded-[36px] border border-white/40 shadow-[0_35px_120px_rgba(96,95,205,0.25)] bg-gradient-to-b from-white/85 via-white/70 to-white/60 backdrop-blur-2xl flex flex-col">
+        <div className="absolute -top-24 -right-32 w-72 h-72 bg-[#c4b5fd]/40 blur-[140px]" aria-hidden="true" />
+        <div className="absolute -bottom-32 -left-24 w-80 h-80 bg-[#fddde6]/50 blur-[160px]" aria-hidden="true" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(99,102,241,0.12),_transparent_55%)]" aria-hidden="true" />
+        <div className="relative z-10">
+          {renderScreen()}
+        </div>
       </div>
     </div>
   );

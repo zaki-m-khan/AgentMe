@@ -8,6 +8,14 @@ interface ProfileSummaryProps {
 }
 
 export default function ProfileSummary({ profile, onActivate }: ProfileSummaryProps) {
+  const avatarSource = profile.avatar || profile.photoUrl;
+  const isImageAvatar = Boolean(
+    avatarSource &&
+      (avatarSource.startsWith('http') ||
+        avatarSource.startsWith('blob:') ||
+        avatarSource.startsWith('data:'))
+  );
+
   return (
     <div className="min-h-screen flex flex-col p-6">
       <div className="mb-6">
@@ -29,8 +37,16 @@ export default function ProfileSummary({ profile, onActivate }: ProfileSummaryPr
 
         <div className="bg-gradient-to-br from-purple-100 to-blue-100 rounded-3xl p-6 space-y-4">
           <div className="flex flex-col items-center">
-            <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center text-5xl shadow-lg mb-3">
-              {profile.avatar}
+            <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center text-5xl shadow-lg mb-3 overflow-hidden">
+              {isImageAvatar ? (
+                <img
+                  src={avatarSource}
+                  alt="AI Avatar"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span>{profile.avatar || '🙂'}</span>
+              )}
             </div>
             <h3>{profile.name}</h3>
             <p className="text-gray-600">{profile.major}</p>

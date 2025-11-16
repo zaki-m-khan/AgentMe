@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Badge } from './ui/badge';
 import { ChevronLeft, X, Heart, Calendar, MapPin, Building2 } from 'lucide-react';
 import { Opportunity, OpportunityType, Screen } from '../App';
 import BottomNav from './BottomNav';
+import { motion, useMotionValue, useTransform, PanInfo } from 'framer-motion';
 
 interface InboxProps {
   onSave: (opportunity: Opportunity) => void;
@@ -69,32 +70,136 @@ const typeColors: Record<OpportunityType, string> = {
   fellowship: 'bg-pink-100 text-pink-700'
 };
 
+interface SwipeCardProps {
+  opportunity: Opportunity;
+  onSwipeLeft: () => void;
+  onSwipeRight: () => void;
+  onViewDetails: (opportunity: Opportunity) => void;
+}
+
+const SwipeableOpportunityCard = ({
+  opportunity,
+  onSwipeLeft,
+  onSwipeRight,
+  onViewDetails,
+}: SwipeCardProps) => {
+  const x = useMotionValue(0);
+  const rotate = useTransform(x, [-200, 0, 200], [-15, 0, 15]);
+  const likeOpacity = useTransform(x, [60, 160], [0, 1]);
+  const nopeOpacity = useTransform(x, [-160, -60], [1, 0]);
+
+  useEffect(() => {
+    x.set(0);
+  }, [opportunity.id, x]);
+
+  const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    if (info.offset.x > 140) {
+      onSwipeRight();
+    } else if (info.offset.x < -140) {
+      onSwipeLeft();
+    }
+  };
+
+  return (
+    <motion.div
+      drag="x"
+      dragConstraints={{ left: 0, right: 0 }}
+      dragElastic={0.2}
+      onDragEnd={handleDragEnd}
+      onTap={() => onViewDetails(opportunity)}
+      style={{ x, rotate }}
+      className="relative bg-white rounded-3xl shadow-xl w-full max-w-sm p-6 space-y-4 cursor-grab active:cursor-grabbing touch-none"
+    >
+      <motion.div
+        className="pointer-events-none absolute top-6 right-6 px-3 py-1 rounded-full bg-emerald-500/90 text-white text-[11px] font-semibold tracking-widest uppercase"
+        style={{ opacity: likeOpacity }}
+      >
+        Save
+      </motion.div>
+      <motion.div
+        className="pointer-events-none absolute top-6 left-6 px-3 py-1 rounded-full bg-rose-500/90 text-white text-[11px] font-semibold tracking-widest uppercase"
+        style={{ opacity: nopeOpacity }}
+      >
+        Pass
+      </motion.div>
+
+      <div className="flex items-start justify-between">
+        <Badge className={`rounded-full ${typeColors[opportunity.type]}`}>
+          {opportunity.type}
+        </Badge>
+        <Badge variant="outline" className="rounded-full">
+          <Calendar className="w-3 h-3 mr-1" />
+          {new Date(opportunity.deadline).toLocaleDateString()}
+        </Badge>
+      </div>
+
+      <div className="space-y-2">
+        <h3>{opportunity.title}</h3>
+        <div className="flex items-center gap-2 text-gray-600">
+          <Building2 className="w-4 h-4" />
+          <p>{opportunity.company}</p>
+        </div>
+        <div className="flex items-center gap-2 text-gray-600">
+          <MapPin className="w-4 h-4" />
+          <p className="text-sm">{opportunity.location}</p>
+        </div>
+      </div>
+
+      <div className="bg-purple-50 rounded-2xl p-4 space-y-2">
+        <p className="text-sm text-purple-900">
+          <span>💡 Why this matches:</span>
+        </p>
+        <p className="text-sm text-gray-700">{opportunity.relevanceExplanation}</p>
+      </div>
+
+      <div className="space-y-2">
+        <p className="text-sm text-gray-600">Skills Match:</p>
+        <div className="flex flex-wrap gap-2">
+          {opportunity.skillsMatch.map((skill) => (
+            <Badge key={skill} variant="secondary" className="rounded-full">
+              {skill}
+            </Badge>
+          ))}
+        </div>
+      </div>
+
+      <p className="text-sm text-gray-500 text-center pt-2">Tap for full details</p>
+    </motion.div>
+  );
+};
+
 export default function Inbox({ onSave, onNavigate, onViewDetails }: InboxProps) {
   const [opportunities, setOpportunities] = useState<Opportunity[]>(mockOpportunities);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [filter, setFilter] = useState<OpportunityType | 'all'>('all');
 
-  const currentOpportunity = opportunities[currentIndex];
+  const filteredOpportunities = filter === 'all' 
+    ? opportunities 
+    : opportunities.filter(o => o.type === filter);
+  const currentOpportunity = filteredOpportunities[currentIndex];
   const maxInbox = 10;
 
+  const handleFilterChange = (value: OpportunityType | 'all') => {
+    setFilter(value);
+    setCurrentIndex(0);
+  };
+
+  const advanceCard = () => {
+    setCurrentIndex((prev) =>
+      prev < filteredOpportunities.length - 1 ? prev + 1 : filteredOpportunities.length
+    );
+  };
+
   const handleSwipeLeft = () => {
-    if (currentIndex < opportunities.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-    }
+    advanceCard();
   };
 
   const handleSwipeRight = () => {
     if (currentOpportunity) {
       onSave(currentOpportunity);
     }
-    if (currentIndex < opportunities.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-    }
+    advanceCard();
   };
-
-  const filteredOpportunities = filter === 'all' 
-    ? opportunities 
-    : opportunities.filter(o => o.type === filter);
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -112,28 +217,28 @@ export default function Inbox({ onSave, onNavigate, onViewDetails }: InboxProps)
           <Badge
             variant={filter === 'all' ? 'default' : 'outline'}
             className="cursor-pointer rounded-full whitespace-nowrap"
-            onClick={() => setFilter('all')}
+            onClick={() => handleFilterChange('all')}
           >
             All
           </Badge>
           <Badge
             variant={filter === 'internship' ? 'default' : 'outline'}
             className="cursor-pointer rounded-full whitespace-nowrap"
-            onClick={() => setFilter('internship')}
+            onClick={() => handleFilterChange('internship')}
           >
             Internships
           </Badge>
           <Badge
             variant={filter === 'scholarship' ? 'default' : 'outline'}
             className="cursor-pointer rounded-full whitespace-nowrap"
-            onClick={() => setFilter('scholarship')}
+            onClick={() => handleFilterChange('scholarship')}
           >
             Scholarships
           </Badge>
           <Badge
             variant={filter === 'research' ? 'default' : 'outline'}
             className="cursor-pointer rounded-full whitespace-nowrap"
-            onClick={() => setFilter('research')}
+            onClick={() => handleFilterChange('research')}
           >
             Research
           </Badge>
@@ -150,54 +255,12 @@ export default function Inbox({ onSave, onNavigate, onViewDetails }: InboxProps)
             </div>
 
             <div className="flex-1 flex items-center justify-center">
-              <div 
-                className="bg-white rounded-3xl shadow-xl w-full max-w-sm p-6 space-y-4 cursor-pointer hover:shadow-2xl transition-shadow"
-                onClick={() => onViewDetails(currentOpportunity)}
-              >
-                <div className="flex items-start justify-between">
-                  <Badge className={`rounded-full ${typeColors[currentOpportunity.type]}`}>
-                    {currentOpportunity.type}
-                  </Badge>
-                  <Badge variant="outline" className="rounded-full">
-                    <Calendar className="w-3 h-3 mr-1" />
-                    {new Date(currentOpportunity.deadline).toLocaleDateString()}
-                  </Badge>
-                </div>
-
-                <div className="space-y-2">
-                  <h3>{currentOpportunity.title}</h3>
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <Building2 className="w-4 h-4" />
-                    <p>{currentOpportunity.company}</p>
-                  </div>
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <MapPin className="w-4 h-4" />
-                    <p className="text-sm">{currentOpportunity.location}</p>
-                  </div>
-                </div>
-
-                <div className="bg-purple-50 rounded-2xl p-4 space-y-2">
-                  <p className="text-sm text-purple-900">
-                    <span>💡 Why this matches:</span>
-                  </p>
-                  <p className="text-sm text-gray-700">{currentOpportunity.relevanceExplanation}</p>
-                </div>
-
-                <div className="space-y-2">
-                  <p className="text-sm text-gray-600">Skills Match:</p>
-                  <div className="flex flex-wrap gap-2">
-                    {currentOpportunity.skillsMatch.map(skill => (
-                      <Badge key={skill} variant="secondary" className="rounded-full">
-                        {skill}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-
-                <p className="text-sm text-gray-500 text-center pt-2">
-                  Tap for full details
-                </p>
-              </div>
+              <SwipeableOpportunityCard
+                opportunity={currentOpportunity}
+                onSwipeLeft={handleSwipeLeft}
+                onSwipeRight={handleSwipeRight}
+                onViewDetails={onViewDetails}
+              />
             </div>
 
             <div className="flex items-center justify-center gap-6 pt-6">

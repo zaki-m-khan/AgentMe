@@ -201,7 +201,7 @@ export default function GoalsInterests({ profile, onNext }: GoalsInterestsProps)
           <div className="pt-4">
             <Button 
               type="submit" 
-              className="w-full rounded-full py-6"
+              className="w-full rounded-full py-6 bg-white text-indigo-700 border border-indigo-100 shadow-[0_12px_30px_rgba(99,102,241,0.18)] hover:-translate-y-0.5 transition-transform disabled:text-indigo-300"
             >
               Next
             </Button>
